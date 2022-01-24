@@ -9,11 +9,15 @@ The SDK is meant to programatically ingest `NDJSON` data.
 ## Ingest to a Tinybird DataSource
 
 ```python
+from tb.datasource import Datasource
+
 with Datasource(datasource_name, token) as ds:
     ds << {'key': 'value', 'key1': 'value1'}
 ```
 
 ```python
+from tb.datasource import Datasource
+
 with Datasource(datasource_name, token, api_url='https://api.us-east.tinybird.co') as ds:
     ds << {'key': 'value', 'key1': 'value1'}
 ```
@@ -21,6 +25,8 @@ with Datasource(datasource_name, token, api_url='https://api.us-east.tinybird.co
 Alternatively you can do:
 
 ```python
+from tb.datasource import Datasource
+
 ds = Datasource(datasource_name, token)
 for json_obj in list_of_json:
     ds << json_obj
