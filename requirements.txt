@@ -1,0 +1,8 @@
+requests==2.25.1
+tweepy==4.4.0
+textblob==0.15.3
+numpy==1.19.5
+pillow==8.1.0
+nltk
+tinybird-cli
+twitchAPI
