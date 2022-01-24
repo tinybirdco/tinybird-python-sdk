@@ -10,12 +10,12 @@ The SDK is meant to programatically ingest `NDJSON` data.
 
 ```python
 with Datasource(datasource_name, token) as ds:
-    ds << json_object
+    ds << {'key': 'value', 'key1': 'value1'}
 ```
 
 ```python
 with Datasource(datasource_name, token, api_url='https://api.us-east.tinybird.co') as ds:
-    ds << json_object
+    ds << {'key': 'value', 'key1': 'value1'}
 ```
 
 Alternatively you can do:
