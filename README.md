@@ -20,7 +20,7 @@ with Datasource(datasource_name, token, api_url='https://api.us-east.tinybird.co
 
 Alternatively you can do:
 
-```
+```python
 datasource = Datasource(datasource_name, token)
 
 for json_obj in list_of_json:
