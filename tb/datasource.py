@@ -90,8 +90,5 @@ class Buffer:
             self.timer_start = None
         if not self.records:
             return
-        fn = self.sink.flush
-        Thread(target=fn).start()
-
-        # self.sink.flush()
+        self.sink.flush()
         self.records = 0
