@@ -38,7 +38,7 @@ ds.flush()
 Notes:
 - The `Datasource` object does some in-memory buffering and uses the [events API](https://docs.tinybird.co/api-reference/datasource-api.html#post-v0-events). 
 - It only supports `ndjson` data
-- It automatically handle [Rate Limits](https://docs.tinybird.co/api-reference/api-reference.html#limits)
+- It automatically handles [Rate Limits](https://docs.tinybird.co/api-reference/api-reference.html#limits)
 
 ## Ingest using an API instance
 
@@ -54,3 +54,7 @@ api.post('/v0/datasources', params={
                               'url': 'https://storage.googleapis.com/davidm-wadus/events.ndjson',
                           })
 ```
+
+- It automatically handle [Rate Limits](https://docs.tinybird.co/api-reference/api-reference.html#limits)
+- Works with any Tinybird API
+- The `post`, `get`, `send` methods signatures are equivalent to the [requests](https://docs.python-requests.org/en/latest/) library.
