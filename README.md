@@ -39,3 +39,18 @@ Notes:
 - The `Datasource` object does some in-memory buffering and uses the [events API](https://docs.tinybird.co/api-reference/datasource-api.html#post-v0-events). 
 - It only supports `ndjson` data
 - It automatically handle [Rate Limits](https://docs.tinybird.co/api-reference/api-reference.html#limits)
+
+## Ingest using an API instance
+
+```python
+
+from tb.api import API
+
+api = API(token, api_url)
+api.post('/v0/datasources', params={
+                              'name': 'datasource_name',
+                              'mode': 'append',
+                              'format': 'ndjson',
+                              'url': 'https://storage.googleapis.com/davidm-wadus/events.ndjson',
+                          })
+```
