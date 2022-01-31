@@ -4,7 +4,7 @@ SDK around Tinybird APIs.
 
 If you want to manage Workspaces, Data Sources and Pipes you might be looking for the [tinybird-cli](https://pypi.org/project/tinybird-cli/).
 
-The SDK is meant to programatically ingest `NDJSON` data.
+The SDK is meant to programatically ingest `NDJSON` data or send any request to an `API` instance.
 
 ## Ingest to a Tinybird DataSource
 
