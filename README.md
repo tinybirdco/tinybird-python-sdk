@@ -4,7 +4,7 @@ SDK around Tinybird APIs.
 
 If you want to manage Workspaces, Data Sources and Pipes you might be looking for the [tinybird-cli](https://pypi.org/project/tinybird-cli/).
 
-The SDK is meant to programatically ingest `NDJSON` data.
+The SDK is meant to programatically ingest `NDJSON` data or send any request to an `API` instance.
 
 ## Ingest to a Tinybird DataSource
 
@@ -38,4 +38,23 @@ ds.flush()
 Notes:
 - The `Datasource` object does some in-memory buffering and uses the [events API](https://docs.tinybird.co/api-reference/datasource-api.html#post-v0-events). 
 - It only supports `ndjson` data
+- It automatically handles [Rate Limits](https://docs.tinybird.co/api-reference/api-reference.html#limits)
+
+## Ingest using an API instance
+
+```python
+
+from tb.api import API
+
+api = API(token, api_url)
+api.post('/v0/datasources', params={
+                              'name': 'datasource_name',
+                              'mode': 'append',
+                              'format': 'ndjson',
+                              'url': 'https://storage.googleapis.com/davidm-wadus/events.ndjson',
+                          })
+```
+
 - It automatically handle [Rate Limits](https://docs.tinybird.co/api-reference/api-reference.html#limits)
+- Works with any Tinybird API
+- The `post`, `get`, `send` methods signatures are equivalent to the [requests](https://docs.python-requests.org/en/latest/) library.
