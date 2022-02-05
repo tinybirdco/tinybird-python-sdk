@@ -75,6 +75,7 @@ class API:
             else:
                 break
         response.raise_for_status()
+        return response
 
     def post(self, path, **kwargs):
         return self.send(path, method='POST', **kwargs)
