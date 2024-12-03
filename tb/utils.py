@@ -9,15 +9,24 @@ License: MIT
 
 # see: http://goo.gl/kTQMs
 SYMBOLS = {
-    'customary'     : ('B', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'),
-    'customary_ext' : ('byte', 'kilo', 'mega', 'giga', 'tera', 'peta', 'exa',
-                       'zetta', 'iotta'),
-    'iec'           : ('Bi', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'),
-    'iec_ext'       : ('byte', 'kibi', 'mebi', 'gibi', 'tebi', 'pebi', 'exbi',
-                       'zebi', 'yobi'),
+    "customary": ("B", "K", "M", "G", "T", "P", "E", "Z", "Y"),
+    "customary_ext": (
+        "byte",
+        "kilo",
+        "mega",
+        "giga",
+        "tera",
+        "peta",
+        "exa",
+        "zetta",
+        "iotta",
+    ),
+    "iec": ("Bi", "Ki", "Mi", "Gi", "Ti", "Pi", "Ei", "Zi", "Yi"),
+    "iec_ext": ("byte", "kibi", "mebi", "gibi", "tebi", "pebi", "exbi", "zebi", "yobi"),
 }
 
-def bytes2human(n, format='%(value).1f %(symbol)s', symbols='customary'):
+
+def bytes2human(n, format="%(value).1f %(symbol)s", symbols="customary"):
     """
     Convert n bytes into a human readable string based on format.
     symbols can be either "customary", "customary_ext", "iec" or "iec_ext",
@@ -60,12 +69,13 @@ def bytes2human(n, format='%(value).1f %(symbol)s', symbols='customary'):
     symbols = SYMBOLS[symbols]
     prefix = {}
     for i, s in enumerate(symbols[1:]):
-        prefix[s] = 1 << (i+1)*10
+        prefix[s] = 1 << (i + 1) * 10
     for symbol in reversed(symbols[1:]):
         if n >= prefix[symbol]:
             value = float(n) / prefix[symbol]
             return format % locals()
     return format % dict(symbol=symbols[0], value=n)
+
 
 def human2bytes(s):
     """
@@ -97,7 +107,7 @@ def human2bytes(s):
     """
     init = s
     num = ""
-    while s and s[0:1].isdigit() or s[0:1] == '.':
+    while s and s[0:1].isdigit() or s[0:1] == ".":
         num += s[0]
         s = s[1:]
     num = float(num)
@@ -106,13 +116,13 @@ def human2bytes(s):
         if letter in sset:
             break
     else:
-        if letter == 'k':
+        if letter == "k":
             # treat 'k' as an alias for 'K' as per: http://goo.gl/kTQMs
-            sset = SYMBOLS['customary']
+            sset = SYMBOLS["customary"]
             letter = letter.upper()
         else:
             raise ValueError("can't interpret %r" % init)
-    prefix = {sset[0]:1}
+    prefix = {sset[0]: 1}
     for i, s in enumerate(sset[1:]):
-        prefix[s] = 1 << (i+1)*10
+        prefix[s] = 1 << (i + 1) * 10
     return int(num * prefix[letter])

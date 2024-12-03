@@ -8,10 +8,14 @@ import logging
 
 
 class Datasource:
-    def __init__(self, datasource_name, token, api_url='https://api.tinybird.co', buffer=None):
+    def __init__(
+        self, datasource_name, token, api_url="https://api.tinybird.co", buffer=None
+    ):
         self.datasource_name = datasource_name
         self.api = API(token, api_url)
-        self.path = f'/events?mode=append&name={self.datasource_name}&format=ndjson&wait=false'
+        self.path = (
+            f"/events?mode=append&name={self.datasource_name}&format=ndjson&wait=false"
+        )
         self.reset()
         self.buffer = buffer
         if not self.buffer:
@@ -24,10 +28,10 @@ class Datasource:
 
     def append(self, value):
         if isinstance(value, bytes):
-            value = value.decode('utf-8')
+            value = value.decode("utf-8")
         if not isinstance(value, str):
             value = json.dumps(value)
-        self.chunk.write(value + '\n')
+        self.chunk.write(value + "\n")
         self.buffer.append()
 
     def tell(self):
@@ -49,7 +53,9 @@ class Datasource:
 
     def flush(self):
         try:
-            logging.info(f'Flushing {self.buffer.records} records and {bytes2human(self.tell())} bytes to {self.datasource_name}')
+            logging.info(
+                f"Flushing {self.buffer.records} records and {bytes2human(self.tell())} bytes to {self.datasource_name}"
+            )
             self.wait = True
             data = self.chunk.getvalue()
             self.reset()
@@ -57,8 +63,11 @@ class Datasource:
         finally:
             self.wait = False
 
+
 class Buffer:
-    def __init__(self, max_wait_seconds=1, max_wait_records=10000, max_wait_bytes=1024*1024*1):
+    def __init__(
+        self, max_wait_seconds=1, max_wait_records=10000, max_wait_bytes=1024 * 1024 * 1
+    ):
         self.records = 0
         self.max_wait_seconds = max_wait_seconds
         self.max_wait_records = max_wait_records
@@ -69,12 +78,17 @@ class Buffer:
 
     def append(self):
         while self.sink.wait:
-            logging.info('Waiting while flushing...')
+            logging.info("Waiting while flushing...")
             time.sleep(0.1)
         self.records += 1
         if max(self.records % self.max_wait_records / 100, 10) == 0:
-            logging.info(f'Buffering {self.records} records and {bytes2human(self.sink.tell())} bytes')
-        if self.records < self.max_wait_records and self.sink.tell() < self.max_wait_bytes:
+            logging.info(
+                f"Buffering {self.records} records and {bytes2human(self.sink.tell())} bytes"
+            )
+        if (
+            self.records < self.max_wait_records
+            and self.sink.tell() < self.max_wait_bytes
+        ):
             if not self.timer:
                 self.timer_start = time.monotonic()
                 self.timer = Timer(self.max_wait_seconds, self.flush)
