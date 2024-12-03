@@ -81,7 +81,6 @@ class TinybirdLoggingHandler(logging.Handler):
         Override this method to implement your specific logging logic.
         """
         try:
-            breakpoint()
             log_data = log_record_to_dict(record)
             log_data["formatted_message"] = self.format(record)
             log_data["app_name"] = self.app_name
