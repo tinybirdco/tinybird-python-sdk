@@ -65,6 +65,8 @@ class API:
             url = f"{self.api_url}/{self.version}/{path.lstrip('/')}"
             if method == 'POST':
                 response = self._session.post(url, headers=headers, **kwargs)
+            elif method == 'DELETE':
+                response = self._session.delete(url, headers=headers, **kwargs)
             else:
                 response = self._session.get(url, headers=headers, **kwargs)
             self._set_rate_limit(response)
@@ -82,3 +84,6 @@ class API:
 
     def get(self, path, **kwargs):
         return self.send(path, method='GET', **kwargs)
+
+    def delete(self, path, **kwargs):
+        return self.send(path, method='DELETE', **kwargs)
