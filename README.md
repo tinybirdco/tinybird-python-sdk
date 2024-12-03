@@ -58,3 +58,29 @@ api.post('/v0/datasources', params={
 - It automatically handle [Rate Limits](https://docs.tinybird.co/api-reference/api-reference.html#limits)
 - Works with any Tinybird API
 - The `post`, `get`, `send` methods signatures are equivalent to the [requests](https://docs.python-requests.org/en/latest/) library.
+
+## Logging from your Python module to a Tinybird Data Source
+
+```py
+import logging
+from tb.logger import TinybirdLoggingHandler
+from dotenv import load_dotenv
+
+load_dotenv()
+TB_API_URL = os.getenv("TB_API_URL")
+TB_ADMIN_TOKEN = os.getenv("TB_ADMIN_TOKEN")
+
+logger = logging.getLogger('your-logger-name')
+handler = TinybirdLoggingHandler(TB_API_URL, TB_ADMIN_TOKEN, 'your-app-name')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+```
+
+Each time you call the logger an event to the `tb_logs` DataSource in your Workspace is sent.
+
+To configure the DataSource name initialize the `TinybirdLogginHandler` like this:
+
+```python
+handler = TinybirdLoggingHandler(TB_API_URL, TB_ADMIN_TOKEN, 'your-app-name', ds_name="your_tb_ds_name")
+```

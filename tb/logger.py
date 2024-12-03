@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import inspect
 from tb.datasource import Datasource
 
@@ -68,11 +68,12 @@ def log_record_to_dict(record: logging.LogRecord) -> Dict[str, Any]:
 
 
 class TinybirdLoggingHandler(logging.Handler):
-    def __init__(self, tinybird_admin_token: str, tinybird_api_url: str, app_name: str):
+    def __init__(self, tinybird_admin_token: str, tinybird_api_url: str, app_name: str, ds_name: Optional[str] = None):
         super().__init__()
         self.tinybird_admin_token = tinybird_admin_token
         self.tinybird_api_url = tinybird_api_url
         self.app_name = app_name
+        self.ds_name = ds_name or "tb_logs"
 
     def emit(self, record: logging.LogRecord) -> None:
         """
@@ -85,7 +86,7 @@ class TinybirdLoggingHandler(logging.Handler):
             log_data["formatted_message"] = self.format(record)
             log_data["app_name"] = self.app_name
             with Datasource(
-                "mcp_logs", self.tinybird_admin_token, api_url=self.tinybird_api_url
+                self.ds_name, self.tinybird_admin_token, api_url=self.tinybird_api_url
             ) as ds:
                 ds << log_data
         except Exception as e:
