@@ -102,8 +102,17 @@ class TinybirdLoggingHandler(logging.Handler):
 
 
 class TinybirdLoggingQueueHandler(QueueHandler):
-    def __init__(self, queue: Queue, **kwargs):
+    def __init__(
+        self,
+        queue: Queue,
+        tinybird_admin_token: str,
+        tinybird_api_url: str,
+        app_name: str,
+        ds_name: Optional[str] = None,
+    ):
         super().__init__(queue)
-        self.handler = TinybirdLoggingHandler(**kwargs)
+        self.handler = TinybirdLoggingHandler(
+            tinybird_admin_token, tinybird_api_url, app_name, ds_name
+        )
         self.listener = QueueListener(self.queue, self.handler)
         self.listener.start()
