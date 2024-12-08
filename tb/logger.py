@@ -1,6 +1,9 @@
 import datetime
 import logging
 from typing import Any, Dict, Optional
+from logging.handlers import QueueHandler
+from logging.handlers import QueueListener
+from multiprocessing import Queue
 import inspect
 from tb.datasource import Datasource
 
@@ -68,7 +71,13 @@ def log_record_to_dict(record: logging.LogRecord) -> Dict[str, Any]:
 
 
 class TinybirdLoggingHandler(logging.Handler):
-    def __init__(self, tinybird_admin_token: str, tinybird_api_url: str, app_name: str, ds_name: Optional[str] = None):
+    def __init__(
+        self,
+        tinybird_admin_token: str,
+        tinybird_api_url: str,
+        app_name: str,
+        ds_name: Optional[str] = None,
+    ):
         super().__init__()
         self.tinybird_admin_token = tinybird_admin_token
         self.tinybird_api_url = tinybird_api_url
@@ -90,3 +99,11 @@ class TinybirdLoggingHandler(logging.Handler):
                 ds << log_data
         except Exception as e:
             self.handleError(record)
+
+
+class TinybirdLoggingQueueHandler(QueueHandler):
+    def __init__(self, queue: Queue, **kwargs):
+        super().__init__(queue)
+        self.handler = TinybirdLoggingHandler(**kwargs)
+        self.listener = QueueListener(self.queue, self.handler)
+        self.listener.start()

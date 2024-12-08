@@ -4,8 +4,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tinybird-python-sdk"
-version = "0.1.2"
+version = "0.1.4"
 description = "Python SDK for Tinybird"
+readme = "README.md"
 authors = [
     {name = "tinybird.co", email = "support@tinybird.co"},
 ]
@@ -18,6 +19,9 @@ dev = [
     "black>=23.12.1",
     "pyproject-toml>=0.0.10",
 ]
+
+[project.urls]
+homepage = "https://github.com/tinybirdco/mcp-tinybird"
 
 [tool.black]
 line-length = 88

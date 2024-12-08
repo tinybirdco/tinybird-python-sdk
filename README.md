@@ -61,7 +61,7 @@ api.post('/v0/datasources', params={
 
 ## Logging from your Python module to a Tinybird Data Source
 
-```py
+```python
 import logging
 from tb.logger import TinybirdLoggingHandler
 from dotenv import load_dotenv
@@ -83,4 +83,25 @@ To configure the DataSource name initialize the `TinybirdLogginHandler` like thi
 
 ```python
 handler = TinybirdLoggingHandler(TB_API_URL, TB_ADMIN_TOKEN, 'your-app-name', ds_name="your_tb_ds_name")
+```
+
+### Non-blocking logging
+
+If you want to avoid blocking the main thread you can use a queue to send the logs to a different thread.
+
+```python
+import logging
+from multiprocessing import Queue
+from tb.logger import TinybirdLoggingQueueHandler
+from dotenv import load_dotenv
+
+load_dotenv()
+TB_API_URL = os.getenv("TB_API_URL")
+TB_ADMIN_TOKEN = os.getenv("TB_ADMIN_TOKEN")
+
+logger = logging.getLogger('your-logger-name')
+handler = TinybirdLoggingQueueHandler(Queue(-1), TB_API_URL, TB_ADMIN_TOKEN, 'your-app-name', ds_name="your_tb_ds_name")
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 ```
