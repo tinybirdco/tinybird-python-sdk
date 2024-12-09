@@ -68,10 +68,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 TB_API_URL = os.getenv("TB_API_URL")
-TB_ADMIN_TOKEN = os.getenv("TB_ADMIN_TOKEN")
+TB_WRITE_TOKEN = os.getenv("TB_WRITE_TOKEN")
 
 logger = logging.getLogger('your-logger-name')
-handler = TinybirdLoggingHandler(TB_API_URL, TB_ADMIN_TOKEN, 'your-app-name')
+handler = TinybirdLoggingHandler(TB_API_URL, TB_WRITE_TOKEN, 'your-app-name')
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
@@ -82,7 +82,7 @@ Each time you call the logger an event to the `tb_logs` DataSource in your Works
 To configure the DataSource name initialize the `TinybirdLogginHandler` like this:
 
 ```python
-handler = TinybirdLoggingHandler(TB_API_URL, TB_ADMIN_TOKEN, 'your-app-name', ds_name="your_tb_ds_name")
+handler = TinybirdLoggingHandler(TB_API_URL, TB_WRITE_TOKEN, 'your-app-name', ds_name="your_tb_ds_name")
 ```
 
 ### Non-blocking logging
@@ -97,10 +97,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 TB_API_URL = os.getenv("TB_API_URL")
-TB_ADMIN_TOKEN = os.getenv("TB_ADMIN_TOKEN")
+TB_WRITE_TOKEN = os.getenv("TB_WRITE_TOKEN")
 
 logger = logging.getLogger('your-logger-name')
-handler = TinybirdLoggingQueueHandler(Queue(-1), TB_API_URL, TB_ADMIN_TOKEN, 'your-app-name', ds_name="your_tb_ds_name")
+handler = TinybirdLoggingQueueHandler(Queue(-1), TB_API_URL, TB_WRITE_TOKEN, 'your-app-name', ds_name="your_tb_ds_name")
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
