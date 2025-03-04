@@ -38,10 +38,10 @@ class TinybirdLitellmHandler(CustomLogger):
         self.api_url = api_url
         self.datasource_name = datasource_name
         self.api = Tinybird(
-            token=self.token, api_url=self.api_url, api_version=api_version
+            token=self.token, api_url=self.api_url, version=api_version
         )
         self.async_api = AsyncTinybird(
-            token=self.token, api_url=self.api_url, api_version=api_version
+            token=self.token, api_url=self.api_url, version=api_version
         )
 
     def log_success_event(self, kwargs, response_obj, start_time, end_time):
