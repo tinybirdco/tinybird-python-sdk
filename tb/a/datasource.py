@@ -10,10 +10,10 @@ from ..utils import bytes2human
 
 class AsyncBuffer:
     def __init__(
-        self, 
-        max_wait_seconds: float = 1, 
-        max_wait_records: int = 10000, 
-        max_wait_bytes: int = 1024 * 1024 * 1
+        self,
+        max_wait_seconds: float = 1,
+        max_wait_records: int = 10000,
+        max_wait_bytes: int = 1024 * 1024 * 1,
     ):
         self.records = 0
         self.max_wait_seconds = max_wait_seconds
@@ -29,13 +29,13 @@ class AsyncBuffer:
             while self.sink and self.sink.wait:
                 logging.info("Waiting while flushing...")
                 await asyncio.sleep(0.1)
-                
+
             self.records += 1
             if max(self.records % self.max_wait_records / 100, 10) == 0:
                 logging.info(
                     f"Buffering {self.records} records and {bytes2human(self.sink.tell())} bytes"
                 )
-                
+
             if (
                 self.records < self.max_wait_records
                 and self.sink.tell() < self.max_wait_bytes
@@ -56,27 +56,25 @@ class AsyncBuffer:
                 self.timer_task.cancel()
                 self.timer_task = None
                 self.timer_start = None
-                
+
             if not self.records or not self.sink:
                 return
-                
+
             await self.sink.flush()
             self.records = 0
 
 
 class AsyncDatasource:
     def __init__(
-        self, 
-        datasource_name: str, 
-        token: str, 
-        api_url: str = "https://api.tinybird.co", 
-        buffer: Optional[AsyncBuffer] = None
+        self,
+        datasource_name: str,
+        token: str,
+        api_url: str = "https://api.tinybird.co",
+        buffer: Optional[AsyncBuffer] = None,
     ):
         self.datasource_name = datasource_name
         self.api = AsyncAPI(token, api_url)
-        self.path = (
-            f"/events?name={self.datasource_name}&format=ndjson&wait=false"
-        )
+        self.path = f"/events?name={self.datasource_name}&format=ndjson&wait=false"
         self.reset()
         self.buffer = buffer
         if not self.buffer:

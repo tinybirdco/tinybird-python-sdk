@@ -8,7 +8,14 @@ import sys
 
 
 class API:
-    def __init__(self, token, api_url="https://api.tinybird.co", version="v0", retry_total=1, backoff_factor=0.2):
+    def __init__(
+        self,
+        token,
+        api_url="https://api.tinybird.co",
+        version="v0",
+        retry_total=1,
+        backoff_factor=0.2,
+    ):
         self.api_url = api_url.rstrip("/")
         self.version = version
         TOKEN_ERROR = f"Token must be a valid Tinybird token for {self.api_url}. Check the `api_url` param is correct and the token has the right permissions. {self.ui_url()}/tokens"
