@@ -117,4 +117,10 @@ customHandler = TinybirdLitellmHandler(
 )
 
 litellm.callbacks = [customHandler]
+
+response = await acompletion(
+    model="gpt-3.5-turbo", 
+    messages=[{"role": "user", "content": "Hi 👋 - i'm openai"}],
+    stream=True
+)
 ```
