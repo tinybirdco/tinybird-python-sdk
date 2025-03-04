@@ -15,47 +15,38 @@ with Datasource(datasource_name, token) as ds:
     ds << {'key': 'value', 'key1': 'value1'}
 ```
 
-```python
-from tb.datasource import Datasource
-
-with Datasource(datasource_name, token, api_url='https://api.us-east.tinybird.co') as ds:
-    ds << {'key': 'value', 'key1': 'value1'}
-```
-
-Alternatively you can do:
+You can also use the async version:
 
 ```python
-from tb.datasource import Datasource
+from tb.a.datasource import AsyncDatasource
 
-ds = Datasource(datasource_name, token)
-for json_obj in list_of_json:
-    ds << json_obj
-
-# just remember to flush the remaining json_obj at the end
-ds.flush()
+async with AsyncDatasource(datasource_name, token, api_url='https://api.us-east.tinybird.co') as ds:
+    await ds << {'key': 'value', 'key1': 'value1'}
 ```
 
 Notes:
-- The `Datasource` object does some in-memory buffering and uses the [events API](https://docs.tinybird.co/api-reference/datasource-api.html#post-v0-events). 
+- The `Datasource` object does some in-memory buffering and uses the [events API](https://www.tinybird.co/docs/v2/get-data-in/events-api). 
 - It only supports `ndjson` data
-- It automatically handles [Rate Limits](https://docs.tinybird.co/api-reference/api-reference.html#limits)
+- It automatically handles [Rate Limits](https://www.tinybird.co/docs/get-started/plans/limits#ingestion-limits-api)
 
 ## Ingest using an API instance
 
 ```python
 
-from tb.api import API
+from tb.a.api import AsyncAPI
 
-api = API(token, api_url)
-api.post('/v0/datasources', params={
-                              'name': 'datasource_name',
-                              'mode': 'append',
-                              'format': 'ndjson',
-                              'url': 'https://storage.googleapis.com/davidm-wadus/events.ndjson',
-                          })
+async with AsyncAPI(token, api_url) as api:
+    await api.post('datasources',
+        params={
+            'name': 'datasource_name',
+            'mode': 'append',
+            'format': 'ndjson',
+            'url': 'https://storage.googleapis.com/davidm-wadus/events.ndjson',
+        }
+    )
 ```
 
-- It automatically handle [Rate Limits](https://docs.tinybird.co/api-reference/api-reference.html#limits)
+- It automatically handles [Rate Limits](https://docs.tinybird.co/api-reference/api-reference.html#limits)
 - Works with any Tinybird API
 - The `post`, `get`, `send` methods signatures are equivalent to the [requests](https://docs.python-requests.org/en/latest/) library.
 
@@ -104,4 +95,32 @@ handler = TinybirdLoggingQueueHandler(Queue(-1), TB_API_URL, TB_WRITE_TOKEN, 'yo
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
+```
+
+## Logging from Litellm to a Tinybird Data Source
+
+Install the `ai` extra:
+
+```
+pip install tinybird-python-sdk[ai]
+```
+
+Then use the following handler:
+
+```python
+from tb.litellm.handler import TinybirdLitellmHandler
+
+customHandler = TinybirdLitellmHandler(
+    api_url="https://api.us-east.aws.tinybird.co", 
+    tinybird_token=os.getenv("TINYBIRD_TOKEN"), 
+    datasource_name="litellm"
+)
+
+litellm.callbacks = [customHandler]
+
+response = await acompletion(
+    model="gpt-3.5-turbo", 
+    messages=[{"role": "user", "content": "Hi 👋 - i'm openai"}],
+    stream=True
+)
 ```

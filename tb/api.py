@@ -8,7 +8,14 @@ import sys
 
 
 class API:
-    def __init__(self, token, api_url="https://api.tinybird.co", version="v0"):
+    def __init__(
+        self,
+        token,
+        api_url="https://api.tinybird.co",
+        version="v0",
+        retry_total=1,
+        backoff_factor=0.2,
+    ):
         self.api_url = api_url.rstrip("/")
         self.version = version
         TOKEN_ERROR = f"Token must be a valid Tinybird token for {self.api_url}. Check the `api_url` param is correct and the token has the right permissions. {self.ui_url()}/tokens"
@@ -16,7 +23,7 @@ class API:
             logging.critical(TOKEN_ERROR)
             sys.exit(-1)
         self.token = token
-        retry = Retry(total=5, backoff_factor=0.2)
+        retry = Retry(total=retry_total, backoff_factor=backoff_factor)
         adapter = HTTPAdapter(max_retries=retry)
         self._session = requests.Session()
         self._session.mount("http://", adapter)
