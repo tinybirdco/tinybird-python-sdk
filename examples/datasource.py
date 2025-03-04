@@ -2,7 +2,7 @@ import asyncio
 import os
 from tb.a.datasource import AsyncDatasource
 
-# Example usage
+# Datasource example usage
 async def example():
     token = os.getenv("TINYBIRD_TOKEN")
     async with AsyncDatasource(

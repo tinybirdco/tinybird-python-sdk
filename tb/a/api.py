@@ -11,7 +11,7 @@ class RateLimitError(Exception):
     pass
 
 class AsyncAPI:
-    def __init__(self, token: str, api_url: str = "https://api.tinybird.co", version: str = "v0"):
+    def __init__(self, token: str, api_url: str = "https://api.tinybird.co", version: str = "v0", retry_total: int = 1):
         self.api_url = api_url.rstrip("/")
         self.version = version
         TOKEN_ERROR = f"Token must be a valid Tinybird token for {self.api_url}. Check the `api_url` param is correct and the token has the right permissions. {self.ui_url()}/tokens"
@@ -25,6 +25,7 @@ class AsyncAPI:
         self.rate_limit_remaining = self.rate_limit_points
         self.rate_limit_reset = 0
         self.retry_after = 1
+        self.retry_total = retry_total
         
         self.token_error = TOKEN_ERROR
 
@@ -69,52 +70,48 @@ class AsyncAPI:
             self.rate_limit_reset = int(headers.get("X-Ratelimit-Reset"))
             self.retry_after = int(headers.get("Retry-After", "0"))
 
-    @backoff.on_exception(
-        backoff.expo,
-        (RateLimitError,),
-        max_tries=5,
-        max_time=30
-    )
-    async def send(
-        self, 
-        path: str, 
-        method: str = "POST", 
-        **kwargs
-    ) -> aiohttp.ClientResponse:
-        """Send an HTTP request to the Tinybird API."""
-        session = await self._get_session()
-        headers = {"Authorization": f"Bearer {self.token}"}
-        
-        if "headers" in kwargs:
-            kwargs["headers"].update(headers)
-        else:
-            kwargs["headers"] = headers
+    async def send(self, path: str, method: str = "POST", **kwargs):
+        @backoff.on_exception(
+            backoff.expo,
+            (RateLimitError,),
+            max_tries=self.retry_total
+        )
+        async def _send():
+            session = await self._get_session()
+            headers = {"Authorization": f"Bearer {self.token}"}
             
-        url = f"{self.api_url}/{self.version}/{path.lstrip('/')}"
-        
-        while True:
-            if method == "POST":
-                response = await session.post(url, **kwargs)
-            elif method == "DELETE":
-                response = await session.delete(url, **kwargs)
+            if "headers" in kwargs:
+                kwargs["headers"].update(headers)
             else:
-                response = await session.get(url, **kwargs)
-                
-            self._set_rate_limit(response)
+                kwargs["headers"] = headers
             
-            if response.status == 429:
-                logging.warning(
-                    f"Too many requests, you can do {self.rate_limit_points} requests per minute..."
-                )
-                raise RateLimitError()
-            else:
-                break
-                
-        if response.status == 403:
-            logging.error(self.token_error)
+            url = f"{self.api_url}/{self.version}/{path.lstrip('/')}"
             
-        response.raise_for_status()
-        return response
+            while True:
+                if method == "POST":
+                    response = await session.post(url, **kwargs)
+                elif method == "DELETE":
+                    response = await session.delete(url, **kwargs)
+                else:
+                    response = await session.get(url, **kwargs)
+                
+                self._set_rate_limit(response)
+                
+                if response.status == 429:
+                    logging.warning(
+                        f"Too many requests, you can do {self.rate_limit_points} requests per minute..."
+                    )
+                    raise RateLimitError()
+                else:
+                    break
+                
+            if response.status == 403:
+                logging.error(self.token_error)
+            
+            response.raise_for_status()
+            return response
+        
+        return await _send()
     
     async def post(self, path: str, **kwargs) -> aiohttp.ClientResponse:
         """Send a POST request to the Tinybird API."""

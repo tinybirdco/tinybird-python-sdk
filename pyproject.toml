@@ -17,9 +17,8 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = [
-    "black>=23.12.1",
-    "pyproject-toml>=0.0.10",
+ai = [
+    "litellm>=1.62.1"
 ]
 
 [project.urls]
