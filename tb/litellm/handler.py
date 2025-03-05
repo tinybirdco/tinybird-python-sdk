@@ -1,4 +1,5 @@
 try:
+    import litellm
     from litellm.integrations.custom_logger import CustomLogger
 except ImportError:
     raise ImportError(
@@ -37,62 +38,85 @@ class TinybirdLitellmHandler(CustomLogger):
         self.token = tinybird_token
         self.api_url = api_url
         self.datasource_name = datasource_name
+        self.api_version = api_version
         self.api = Tinybird(
-            token=self.token, api_url=self.api_url, version=api_version
+            token=self.token, api_url=self.api_url, version=self.api_version
         )
         self.async_api = AsyncTinybird(
-            token=self.token, api_url=self.api_url, version=api_version
+            token=self.token, api_url=self.api_url, version=self.api_version
         )
 
+    def _extract_data(self, kwargs, response_obj, start_time, end_time):
+        data = {
+            "model": kwargs.get("model"),
+            "messages": kwargs.get("messages"),
+            "user": kwargs.get("user"),
+            "start_time": start_time,
+            "end_time": end_time,
+            "id": kwargs.get("litellm_call_id"),
+            "stream": kwargs.get("stream", False),
+            "call_type": kwargs.get("call_type", "completion"),
+            "provider": kwargs.get("custom_llm_provider"),
+            "api_key": kwargs.get("api_key"),
+            "log_event_type": kwargs.get("log_event_type"),
+            "llm_api_duration_ms": kwargs.get("llm_api_duration_ms"),
+            "response_headers": kwargs.get("response_headers", {}),
+            "cache_hit": kwargs.get("cache_hit", False),
+            "standard_logging_object_id": kwargs.get("standard_logging_object", {}).get("id"),
+            "standard_logging_object_status": kwargs.get("standard_logging_object", {}).get("status"),
+            "standard_logging_object_response_time": kwargs.get("standard_logging_object", {}).get
+            ("response_time"),
+            "standard_logging_object_saved_cache_cost": kwargs.get("standard_logging_object", {}).get("saved_cache_cost"),
+            "standard_logging_object_hidden_params": kwargs.get("standard_logging_object", {}).get("status"),
+        }
+        
+        # response = litellm.completion(model="gpt-3.5-turbo", messages=messages, metadata={"hello": "world"})
+        litellm_params = kwargs.get("litellm_params", {})
+        data["proxy_metadata"] = litellm_params.get("metadata", {})
+        data["response"] = response_obj.json()
+        data["cost"] = litellm.completion_cost(completion_response=response_obj)
+
+        data["exception"] = kwargs.get("exception", None)
+        data["traceback"] = kwargs.get("traceback_exception", None)
+        if isinstance(start_time, datetime) and isinstance(end_time, datetime):
+            duration = (end_time - start_time).total_seconds()
+        else:
+            duration = (end_time - start_time)
+        data["duration"] = duration
+        return safe_json_dumps(data)
+    
+class TinybirdLitellmSyncHandler(TinybirdLitellmHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def log_success_event(self, kwargs, response_obj, start_time, end_time):
+        data = self._extract_data(kwargs, response_obj, start_time, end_time)
         self.api.send(
             f"events?name={self.datasource_name}",
-            data=safe_json_dumps(
-                {
-                    "kwargs": kwargs,
-                    "response_obj": response_obj,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                }
-            ),
+            data=data
         )
 
     def log_failure_event(self, kwargs, response_obj, start_time, end_time):
+        data = self._extract_data(kwargs, response_obj, start_time, end_time)
         self.api.send(
             f"events?name={self.datasource_name}",
-            data=safe_json_dumps(
-                {
-                    "kwargs": kwargs,
-                    "response_obj": response_obj,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                }
-            ),
+            data=data
         )
 
-    #### ASYNC #### - for acompletion/aembeddings
+class TinybirdLitellmAsyncHandler(TinybirdLitellmHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
+        data = self._extract_data(kwargs, response_obj, start_time, end_time)
         await self.async_api.send(
             f"events?name={self.datasource_name}",
-            data=safe_json_dumps(
-                {
-                    "kwargs": kwargs,
-                    "response_obj": response_obj,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                }
-            ),
-        )
+            data=data
+    )
 
     async def async_log_failure_event(self, kwargs, response_obj, start_time, end_time):
+        data = self._extract_data(kwargs, response_obj, start_time, end_time)
         await self.async_api.send(
             f"events?name={self.datasource_name}",
-            data=safe_json_dumps(
-                {
-                    "kwargs": kwargs,
-                    "response_obj": response_obj,
-                    "start_time": start_time,
-                    "end_time": end_time,
-                }
-            ),
+            data=data
         )

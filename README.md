@@ -1,6 +1,6 @@
 # Tinybird Python SDK
 
-SDK around Tinybird APIs.
+SDK around [Tinybird](https://www.tinybird.co/) APIs.
 
 If you want to manage Workspaces, Data Sources and Pipes you might be looking for the [tinybird-cli](https://pypi.org/project/tinybird-cli/).
 
@@ -11,7 +11,7 @@ The SDK is meant to programatically ingest `NDJSON` data or send any request to 
 ```python
 from tb.datasource import Datasource
 
-with Datasource(datasource_name, token) as ds:
+with Datasource(datasource_name, tinybird_token) as ds:
     ds << {'key': 'value', 'key1': 'value1'}
 ```
 
@@ -20,7 +20,7 @@ You can also use the async version:
 ```python
 from tb.a.datasource import AsyncDatasource
 
-async with AsyncDatasource(datasource_name, token, api_url='https://api.us-east.tinybird.co') as ds:
+async with AsyncDatasource(datasource_name, tinybird_token, api_url='https://api.us-east.tinybird.co') as ds:
     await ds << {'key': 'value', 'key1': 'value1'}
 ```
 
@@ -35,7 +35,7 @@ Notes:
 
 from tb.a.api import AsyncAPI
 
-async with AsyncAPI(token, api_url) as api:
+async with AsyncAPI(tinybird_token, api_url) as api:
     await api.post('datasources',
         params={
             'name': 'datasource_name',
@@ -58,8 +58,8 @@ from tb.logger import TinybirdLoggingHandler
 from dotenv import load_dotenv
 
 load_dotenv()
-TB_API_URL = os.getenv("TB_API_URL")
-TB_WRITE_TOKEN = os.getenv("TB_WRITE_TOKEN")
+TB_API_URL = os.getenv("TINYBIRD_API_URL")
+TB_WRITE_TOKEN = os.getenv("TINYBIRD_WRITE_TOKEN")
 
 logger = logging.getLogger('your-logger-name')
 handler = TinybirdLoggingHandler(TB_API_URL, TB_WRITE_TOKEN, 'your-app-name')
@@ -87,8 +87,8 @@ from tb.logger import TinybirdLoggingQueueHandler
 from dotenv import load_dotenv
 
 load_dotenv()
-TB_API_URL = os.getenv("TB_API_URL")
-TB_WRITE_TOKEN = os.getenv("TB_WRITE_TOKEN")
+TB_API_URL = os.getenv("TINYBIRD_API_URL")
+TB_WRITE_TOKEN = os.getenv("TINYBIRD_WRITE_TOKEN")
 
 logger = logging.getLogger('your-logger-name')
 handler = TinybirdLoggingQueueHandler(Queue(-1), TB_API_URL, TB_WRITE_TOKEN, 'your-app-name', ds_name="your_tb_ds_name")
@@ -108,9 +108,9 @@ pip install tinybird-python-sdk[ai]
 Then use the following handler:
 
 ```python
-from tb.litellm.handler import TinybirdLitellmHandler
+from tb.litellm.handler import TinybirdLitellmAsyncHandler
 
-customHandler = TinybirdLitellmHandler(
+customHandler = TinybirdLitellmAsyncHandler(
     api_url="https://api.us-east.aws.tinybird.co", 
     tinybird_token=os.getenv("TINYBIRD_TOKEN"), 
     datasource_name="litellm"
@@ -123,4 +123,46 @@ response = await acompletion(
     messages=[{"role": "user", "content": "Hi 👋 - i'm openai"}],
     stream=True
 )
+```
+
+This is the schema for the `litellm` data source:
+
+```sql
+SCHEMA >
+    `model` LowCardinality(String) `json:$.model` DEFAULT 'unknown',
+    `messages` Array(Map(String, String)) `json:$.messages[:]` DEFAULT [],
+    `user` String `json:$.user` DEFAULT 'unknown',
+    `start_time` DateTime `json:$.start_time` DEFAULT now(),
+    `end_time` DateTime `json:$.end_time` DEFAULT now(),
+    `id` String `json:$.id` DEFAULT '',
+    `stream` Boolean `json:$.stream` DEFAULT false,
+    `call_type` LowCardinality(String) `json:$.call_type` DEFAULT 'unknown',
+    `provider` LowCardinality(String) `json:$.provider` DEFAULT 'unknown',
+    `api_key` String `json:$.api_key` DEFAULT '',
+    `log_event_type` LowCardinality(String) `json:$.log_event_type` DEFAULT 'unknown',
+    `llm_api_duration_ms` Float32 `json:$.llm_api_duration_ms` DEFAULT 0,
+    `cache_hit` Boolean `json:$.cache_hit` DEFAULT false,
+    `response_status` LowCardinality(String) `json:$.standard_logging_object_status` DEFAULT 'unknown',
+    `response_time` Float32 `json:$.standard_logging_object_response_time` DEFAULT 0,
+    `proxy_metadata` String `json:$.proxy_metadata` DEFAULT '',
+    `organization` String `json:$.proxy_metadata.organization` DEFAULT '',
+    `environment` String `json:$.proxy_metadata.environment` DEFAULT '',
+    `project` String `json:$.proxy_metadata.project` DEFAULT '',
+    `chat_id` String `json:$.proxy_metadata.chat_id` DEFAULT '',
+    `response` String `json:$.response` DEFAULT '',
+    `response_id` String `json:$.response.id`,
+    `response_object` String `json:$.response.object` DEFAULT 'unknown',
+    `response_choices` Array(String) `json:$.response.choices[:]` DEFAULT [],
+    `completion_tokens` UInt16 `json:$.response.usage.completion_tokens` DEFAULT 0,
+    `prompt_tokens` UInt16 `json:$.response.usage.prompt_tokens` DEFAULT 0,
+    `total_tokens` UInt16 `json:$.response.usage.total_tokens` DEFAULT 0,
+    `cost` Float32 `json:$.cost` DEFAULT 0,
+    `exception` String `json:$.exception` DEFAULT '',
+    `traceback` String `json:$.traceback` DEFAULT '',
+    `duration` Float32 `json:$.duration` DEFAULT 0
+
+
+ENGINE MergeTree
+ENGINE_SORTING_KEY start_time, organization, project, model
+ENGINE_PARTITION_KEY toYYYYMM(start_time)
 ```
