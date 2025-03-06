@@ -6,6 +6,10 @@ If you want to manage Workspaces, Data Sources and Pipes you might be looking fo
 
 The SDK is meant to programatically ingest `NDJSON` data or send any request to an `API` instance.
 
+It contains handlers for:
+- logging events to a Tinybird Data Source from your Python module.
+- logging events from [litellm](https://www.litellm.ai/) to a Tinybird Data Source.
+
 ## Ingest to a Tinybird DataSource
 
 ```python
@@ -108,6 +112,8 @@ pip install tinybird-python-sdk[ai]
 Then use the following handler:
 
 ```python
+import litellm
+from litellm import acompletion
 from tb.litellm.handler import TinybirdLitellmAsyncHandler
 
 customHandler = TinybirdLitellmAsyncHandler(

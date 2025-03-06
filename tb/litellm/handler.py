@@ -11,6 +11,7 @@ import json
 from datetime import datetime
 from tb.a.api import AsyncAPI as AsyncTinybird
 from tb.api import API as Tinybird
+import logging
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -90,33 +91,44 @@ class TinybirdLitellmSyncHandler(TinybirdLitellmHandler):
         super().__init__(*args, **kwargs)
 
     def log_success_event(self, kwargs, response_obj, start_time, end_time):
-        data = self._extract_data(kwargs, response_obj, start_time, end_time)
-        self.api.send(
-            f"events?name={self.datasource_name}",
-            data=data
-        )
-
+        try:
+            data = self._extract_data(kwargs, response_obj, start_time, end_time)
+            self.api.send(
+                f"events?name={self.datasource_name}",
+                data=data
+            )
+        except Exception as e:
+            logging.error(f"Error logging success event: {e}")
     def log_failure_event(self, kwargs, response_obj, start_time, end_time):
-        data = self._extract_data(kwargs, response_obj, start_time, end_time)
-        self.api.send(
-            f"events?name={self.datasource_name}",
-            data=data
-        )
+        try:
+            data = self._extract_data(kwargs, response_obj, start_time, end_time)
+            self.api.send(
+                f"events?name={self.datasource_name}",
+                data=data
+            )
+        except Exception as e:
+            logging.error(f"Error logging failure event: {e}")
 
 class TinybirdLitellmAsyncHandler(TinybirdLitellmHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
-        data = self._extract_data(kwargs, response_obj, start_time, end_time)
-        await self.async_api.send(
-            f"events?name={self.datasource_name}",
-            data=data
-    )
+        try:
+            data = self._extract_data(kwargs, response_obj, start_time, end_time)
+            await self.async_api.send(
+                f"events?name={self.datasource_name}",
+                data=data
+            )
+        except Exception as e:
+            logging.error(f"Error logging success event: {e}")
 
     async def async_log_failure_event(self, kwargs, response_obj, start_time, end_time):
-        data = self._extract_data(kwargs, response_obj, start_time, end_time)
-        await self.async_api.send(
-            f"events?name={self.datasource_name}",
-            data=data
-        )
+        try:
+            data = self._extract_data(kwargs, response_obj, start_time, end_time)
+            await self.async_api.send(
+                f"events?name={self.datasource_name}",
+                data=data
+            )
+        except Exception as e:
+            logging.error(f"Error logging failure event: {e}")
