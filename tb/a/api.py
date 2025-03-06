@@ -25,7 +25,6 @@ class AsyncAPI:
         TOKEN_ERROR = f"Token must be a valid Tinybird token for {self.api_url}. Check the `api_url` param is correct and the token has the right permissions. {self.ui_url()}/tokens"
         if not token:
             logging.critical(TOKEN_ERROR)
-            sys.exit(-1)
         self.token = token
         self._session: Optional[aiohttp.ClientSession] = None
 

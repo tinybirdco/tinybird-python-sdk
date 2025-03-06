@@ -21,7 +21,6 @@ class API:
         TOKEN_ERROR = f"Token must be a valid Tinybird token for {self.api_url}. Check the `api_url` param is correct and the token has the right permissions. {self.ui_url()}/tokens"
         if not token:
             logging.critical(TOKEN_ERROR)
-            sys.exit(-1)
         self.token = token
         retry = Retry(total=retry_total, backoff_factor=backoff_factor)
         adapter = HTTPAdapter(max_retries=retry)
@@ -34,14 +33,6 @@ class API:
         self.rate_limit_remaining = self.rate_limit_points
         self.rate_limit_reset = 0
         self.retry_after = 1
-
-        # check the token is valid
-        try:
-            self.get("/datasources")
-        except requests.HTTPError as e:
-            if e.response.status_code == 403:
-                logging.error(TOKEN_ERROR)
-                sys.exit(-1)
 
     def ui_url(self):
         return self.api_url.replace("api", "ui")

@@ -40,12 +40,6 @@ class TinybirdLitellmHandler(CustomLogger):
         self.api_url = api_url
         self.datasource_name = datasource_name
         self.api_version = api_version
-        self.api = Tinybird(
-            token=self.token, api_url=self.api_url, version=self.api_version
-        )
-        self.async_api = AsyncTinybird(
-            token=self.token, api_url=self.api_url, version=self.api_version
-        )
 
     def _extract_data(self, kwargs, response_obj, start_time, end_time):
         api_key = kwargs.get("api_key")
@@ -108,6 +102,9 @@ class TinybirdLitellmHandler(CustomLogger):
 class TinybirdLitellmSyncHandler(TinybirdLitellmHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.api = Tinybird(
+            token=self.token, api_url=self.api_url, version=self.api_version
+        )
 
     def log_success_event(self, kwargs, response_obj, start_time, end_time):
         try:
@@ -127,6 +124,9 @@ class TinybirdLitellmSyncHandler(TinybirdLitellmHandler):
 class TinybirdLitellmAsyncHandler(TinybirdLitellmHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.async_api = AsyncTinybird(
+            token=self.token, api_url=self.api_url, version=self.api_version
+        )
 
     async def async_log_success_event(self, kwargs, response_obj, start_time, end_time):
         try:

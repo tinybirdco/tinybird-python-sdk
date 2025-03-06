@@ -127,9 +127,17 @@ litellm.callbacks = [customHandler]
 response = await acompletion(
     model="gpt-3.5-turbo", 
     messages=[{"role": "user", "content": "Hi 👋 - i'm openai"}],
-    stream=True
+    stream=True,
+    metadata={
+        "organization": "tinybird",
+        "environment": "dev",
+        "project": "litellm_test",
+        "chat_id": "1234567890",
+    },
 )
 ```
+
+Track custom metadata using the `metadata` dictionary.
 
 This is the schema for the `litellm` data source:
 
