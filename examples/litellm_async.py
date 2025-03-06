@@ -21,7 +21,12 @@ async def main():
         messages=[{"role": "user", "content": "Hi 👋 - i'm openai"}],
         stream=True,
         user="test_user",
-        metadata={"organization": "tinybird", "environment": "dev", "project": "litellm_test", "chat_id": "1234567890"}
+        metadata={
+            "organization": "tinybird",
+            "environment": "dev",
+            "project": "litellm_test",
+            "chat_id": "1234567890",
+        },
     )
 
     async for chunk in response:
