@@ -23,45 +23,77 @@ class AsyncBuffer:
         self.timer_start = None
         self.sink = None
         self._lock = asyncio.Lock()
+        self._shutdown = False
+        self._pending_flush = False
 
     async def append(self):
-        async with self._lock:
-            while self.sink and self.sink.wait:
-                logging.info("Waiting while flushing...")
-                await asyncio.sleep(0.1)
+        try:
+            async with self._lock:
+                # If we're already shutting down or flushing, don't add more records
+                if self._shutdown or self._pending_flush:
+                    return
 
-            self.records += 1
-            if max(self.records % self.max_wait_records / 100, 10) == 0:
-                logging.info(
-                    f"Buffering {self.records} records and {bytes2human(self.sink.tell())} bytes"
-                )
+                # If we're waiting for a flush to complete, wait a bit
+                while self.sink and self.sink.wait and not self._shutdown:
+                    logging.info("Waiting while flushing...")
+                    await asyncio.sleep(0.1)
 
-            if (
-                self.records < self.max_wait_records
-                and self.sink.tell() < self.max_wait_bytes
-            ):
-                if not self.timer_task or self.timer_task.done():
-                    self.timer_start = asyncio.get_event_loop().time()
-                    self.timer_task = asyncio.create_task(self._timer_callback())
-            else:
-                await self.flush()
+                if self._shutdown:
+                    return
 
-    async def _timer_callback(self):
-        await asyncio.sleep(self.max_wait_seconds)
-        await self.flush()
+                self.records += 1
+                if max(self.records % self.max_wait_records / 100, 10) == 0:
+                    logging.info(
+                        f"Buffering {self.records} records and {bytes2human(self.sink.tell())} bytes"
+                    )
 
-    async def flush(self):
-        async with self._lock:
+                if (
+                    self.records < self.max_wait_records
+                    and self.sink.tell() < self.max_wait_bytes
+                ):
+                    if not self.timer_task or self.timer_task.done():
+                        self.timer_start = asyncio.get_event_loop().time()
+                        self.timer_task = asyncio.create_task(self._timer_callback())
+                else:
+                    await self.flush()
+        except asyncio.CancelledError:
+            self._shutdown = True
             if self.timer_task and not self.timer_task.done():
                 self.timer_task.cancel()
-                self.timer_task = None
-                self.timer_start = None
+            raise
 
-            if not self.records or not self.sink:
-                return
+    async def _timer_callback(self):
+        try:
+            await asyncio.sleep(self.max_wait_seconds)
+            await self.flush()
+        except asyncio.CancelledError:
+            self._shutdown = True
+            raise
 
-            await self.sink.flush()
-            self.records = 0
+    async def flush(self):
+        try:
+            async with self._lock:
+                # If we're already shutting down or there's nothing to flush, return early
+                if self._shutdown or not self.records or not self.sink:
+                    return
+
+                # Cancel any pending timer task
+                if self.timer_task and not self.timer_task.done():
+                    self.timer_task.cancel()
+                    self.timer_task = None
+                    self.timer_start = None
+
+                # Mark that we're about to flush to prevent new records from being added
+                self._pending_flush = True
+
+                try:
+                    await self.sink.flush()
+                    self.records = 0
+                finally:
+                    self._pending_flush = False
+        except asyncio.CancelledError:
+            self._shutdown = True
+            raise
 
 
 class AsyncDatasource:
@@ -82,18 +114,28 @@ class AsyncDatasource:
         self.buffer.sink = self
         self.wait = False
         self._lock = asyncio.Lock()
+        self._shutdown = False
+        self._pending_flush = False
 
     def reset(self):
         self.chunk = StringIO()
 
     async def append(self, value: Union[str, bytes, Dict[str, Any]]):
-        async with self._lock:
-            if isinstance(value, bytes):
-                value = value.decode("utf-8")
-            if not isinstance(value, str):
-                value = json.dumps(value)
-            self.chunk.write(value + "\n")
-            await self.buffer.append()
+        try:
+            async with self._lock:
+                # If we're already shutting down or flushing, don't add more records
+                if self._shutdown or self._pending_flush:
+                    return
+
+                if isinstance(value, bytes):
+                    value = value.decode("utf-8")
+                if not isinstance(value, str):
+                    value = json.dumps(value)
+                self.chunk.write(value + "\n")
+                await self.buffer.append()
+        except asyncio.CancelledError:
+            self._shutdown = True
+            raise
 
     def tell(self):
         return self.chunk.tell()
@@ -113,18 +155,41 @@ class AsyncDatasource:
         return self
 
     async def close(self):
-        await self.buffer.flush()
-        await self.api.close()
+        try:
+            # Set shutdown flag to prevent new operations
+            self._shutdown = True
+
+            # Only try to flush if we have data
+            if self.buffer.records > 0:
+                await self.buffer.flush()
+
+            # Close the API connection
+            await self.api.close()
+        except asyncio.CancelledError:
+            # If we're cancelled during close, just propagate the error
+            raise
 
     async def flush(self):
-        async with self._lock:
-            try:
-                logging.info(
-                    f"Flushing {self.buffer.records} records and {bytes2human(self.tell())} bytes to {self.datasource_name}"
-                )
-                self.wait = True
-                data = self.chunk.getvalue()
-                self.reset()
-                await self.api.post(self.path, data=data)
-            finally:
-                self.wait = False
+        try:
+            async with self._lock:
+                # If we're already shutting down or there's nothing to flush, return early
+                if self._shutdown or self.buffer.records == 0:
+                    return
+
+                # Mark that we're about to flush to prevent new records from being added
+                self._pending_flush = True
+
+                try:
+                    logging.info(
+                        f"Flushing {self.buffer.records} records and {bytes2human(self.tell())} bytes to {self.datasource_name}"
+                    )
+                    self.wait = True
+                    data = self.chunk.getvalue()
+                    self.reset()
+                    await self.api.post(self.path, data=data)
+                finally:
+                    self.wait = False
+                    self._pending_flush = False
+        except asyncio.CancelledError:
+            self._shutdown = True
+            raise
