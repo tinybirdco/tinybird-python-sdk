@@ -48,6 +48,9 @@ class TinybirdLitellmHandler(CustomLogger):
         else:
             api_key = "****"
 
+        # Safely extract standard_logging_object with proper null checks
+        standard_logging_object = kwargs.get("standard_logging_object") or {}
+        
         data = {
             "model": kwargs.get("model"),
             "messages": kwargs.get("messages"),
@@ -62,21 +65,11 @@ class TinybirdLitellmHandler(CustomLogger):
             "llm_api_duration_ms": kwargs.get("llm_api_duration_ms"),
             "response_headers": kwargs.get("response_headers", {}),
             "cache_hit": kwargs.get("cache_hit", False),
-            "standard_logging_object_id": kwargs.get("standard_logging_object", {}).get(
-                "id"
-            ),
-            "standard_logging_object_status": kwargs.get(
-                "standard_logging_object", {}
-            ).get("status"),
-            "standard_logging_object_response_time": kwargs.get(
-                "standard_logging_object", {}
-            ).get("response_time"),
-            "standard_logging_object_saved_cache_cost": kwargs.get(
-                "standard_logging_object", {}
-            ).get("saved_cache_cost"),
-            "standard_logging_object_hidden_params": kwargs.get(
-                "standard_logging_object", {}
-            ).get("status"),
+            "standard_logging_object_id": standard_logging_object.get("id"),
+            "standard_logging_object_status": standard_logging_object.get("status"),
+            "standard_logging_object_response_time": standard_logging_object.get("response_time"),
+            "standard_logging_object_saved_cache_cost": standard_logging_object.get("saved_cache_cost"),
+            "standard_logging_object_hidden_params": standard_logging_object.get("status"),
             "api_key": api_key,
         }
 
